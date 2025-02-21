@@ -65,14 +65,18 @@ func (s *ProxyTestSuite) SetupTest() {
 	require.NoError(s.T(), err)
 
 	for i := 0; i < 10; i++ {
-		if _, err := client.GetTxs(context.TODO()); err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		if _, err := client.GetTxs(ctx); err == nil {
+			cancel()
 			break
 		}
+		cancel()
 		time.Sleep(100 * time.Millisecond)
 	}
 
 	s.client = client
 	s.Exec = client
+	s.TxInjector = exec
 	s.cleanup = func() {
 		_ = client.Stop()
 		s.server.Stop()
